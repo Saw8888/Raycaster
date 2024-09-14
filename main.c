@@ -13,11 +13,11 @@
 #define mapY 8
 #define cubeS 64
 
-float pX = 100;
-float pY = 100;
+int pX = 100;
+int pY = 100;
 float pDeltaX;
 float pDeltaY;
-float pAngle = 4.5;
+float pAngle = 0;
 
 unsigned int map[mapY][mapX] = {{1,1,1,1,1,1,1,1},
                                 {1,0,0,0,0,0,0,1},
@@ -91,13 +91,14 @@ void raycasting() {
  ray.y = pY;
  int pGridX = floor(pX / cubeS); // Grid position in X
  int pGridY = floor(pY / cubeS); // Grid position in Y
- int pDistX = abs(pX - (pGridX * 64)); // Distance to the vertical line to the right
  int pDistY = pY - (pGridY * 64); // Distance to the horizontal line above
- double atan = -1/tan(ray.angle);
-
+ int pDistX = ((pGridX + 1) * 64) - pX; // Distance to the vertical line to the right
+ //double ntan = -tan(ray.angle);
 
  // Horizontal line Intersection
- if (ray.angle < PI && ray.angle != 0) { // Looking up
+ if((ray.angle > PI-0.05 && ray.angle < PI+0.05) || ray.angle == 0){}
+ 
+ else if (ray.angle < PI && ray.angle != 0) { // Looking up
   float dX = pDistY / tan(ray.angle); // Calculates the X distance to the horizontal collision
   ray.x += dX;
   ray.y -= pDistY;
@@ -109,18 +110,42 @@ void raycasting() {
   }
  }
  else if (ray.angle > PI && ray.angle != 0) { // Looking down
- float dX = (cubeS-pDistY) / tan(2*PI-ray.angle); // Adjusted: Calculates the X distance to the horizontal collision
- ray.x += dX;
- ray.y += cubeS-pDistY;
- float stepY = cubeS;
- float stepX = -stepY / tan(ray.angle);
- DL(pX, pY, pX + dX, pY, 1, (pixelData){0, 0, 255});
- DL(pX + dX, pY, pX + dX, pY + (64 - pDistY), 1, (pixelData){0, 0, 255});
- while (map[(int)floor((ray.y / cubeS) + 0.1)][(int)floor(ray.x / cubeS)] != 1) {
-  ray.x += stepX;
-  ray.y += stepY;
+  float dX = (cubeS-pDistY) / tan(2*PI-ray.angle); // Adjusted: Calculates the X distance to the horizontal collision
+  ray.x += dX;
+  ray.y += cubeS-pDistY;
+  float stepY = cubeS;
+  float stepX = -stepY / tan(ray.angle);
+  while (map[(int)floor((ray.y / cubeS) + 0.1)][(int)floor(ray.x / cubeS)] != 1) {
+   ray.x += stepX;
+   ray.y += stepY;
+  }
  }
-}
+
+ //Vertical line intersection
+ if (ray.angle < PI/2 || ray.angle > (3*PI)/2 ) { // Looking right
+  float dY = pDistX * -tan(ray.angle); // Calculates the X distance to the vertical collision
+  ray.y += dY;
+  ray.x += pDistX;
+  float stepX = cubeS;
+  float stepY = stepX * -tan(ray.angle);
+
+  while (map[(int)floor(ray.y / cubeS)][(int)floor((ray.x / cubeS) + 0.1)] != 1) {
+   ray.x += stepX;
+   ray.y += stepY;
+  }
+ }
+ else if (ray.angle > PI/2 && ray.angle < (3*PI)/2 ) { // Looking left
+  float dY = (cubeS-pDistX) * tan(ray.angle); // Adjusted: Calculates the X distance to the vertical collision
+  ray.y += dY;
+  ray.x -= cubeS-pDistX;
+  float stepX = -cubeS;
+  float stepY = stepX * tan(ray.angle);
+  
+  while (map[(int)floor(ray.y / cubeS)][(int)floor((ray.x / cubeS) - 0.1)] != 1) {
+   ray.x += stepX;
+   ray.y -= stepY;
+  }
+ }
 
  
  // Draw the ray
@@ -167,7 +192,7 @@ int main(int argc, char** argv) {
   frameCount++;
   time_t currentTime = time(NULL);
   if (currentTime - startTime >= 1) {
-   //drawFPS(100,1,(float)frameCount);
+   drawFPS(100,1,(float)frameCount);
    frameCount = 0;
    startTime = currentTime;
   }
